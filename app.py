@@ -26,17 +26,14 @@ async def process_video(count):
     tts = Communicate(full_script, "hi-IN-MadhurNeural")
     await tts.save("final_audio.mp3")
     
-    # 3. Professional Rendering (With Background Image & Ticker)
-    # Hum internet se ek news background download kar rahe hain
-    bg_url = "https://raw.githubusercontent.com/diginavneet24-jpg/digineet-app/main/bg.jpg" # Agar aapki repo mein hai
-    # Filhal hum ek dark gradient background generate kar rahe hain FFmpeg se jo pro lagta hai
-    
+    # 3. FIX: Browser-Compatible Rendering
+    # Humne yahan '-pix_fmt yuv420p' add kiya hai taaki Chrome/Android par chale
     cmd = (
         f"ffmpeg -y -f lavfi -i \"color=c=0x000520:s=720x1280:d=60\" -i final_audio.mp3 "
         f"-vf \"drawbox=y=ih-120:color=red@0.8:width=iw:height=120:t=fill, "
         f"drawtext=text='DIGINEET NEWS':fontcolor=yellow:fontsize=70:x=(w-text_w)/2:y=150:shadowcolor=black:shadowx=2:shadowy=2, "
         f"drawtext=text='{headlines_text}':fontcolor=white:fontsize=35:x=w-mod(200*t\,w+tw):y=ih-80\" "
-        f"-c:v libx264 -c:a copy -shortest final_video.mp4"
+        f"-c:v libx264 -pix_fmt yuv420p -c:a aac -shortest final_video.mp4"
     )
     
     os.system(cmd)
@@ -45,8 +42,15 @@ async def process_video(count):
 if st.button("🚀 Generate Professional Video"):
     with st.spinner("AI Graphics aur Audio merge kar raha hai..."):
         try:
+            if os.path.exists("final_video.mp4"): os.remove("final_video.mp4") # Purani file delete
             video_path = asyncio.run(process_video(news_count))
-            st.video(video_path)
-            st.success("Bhai, ab check karo look!")
+            
+            # Video display
+            with open(video_path, "rb") as f:
+                st.video(f.read())
+            
+            st.success("Bhai, ab check karo! Video play honi chahiye.")
+            with open(video_path, "rb") as f:
+                st.download_button("📥 Download News Video", f, "DigiNeet_News.mp4")
         except Exception as e:
             st.error(f"Error: {e}")
